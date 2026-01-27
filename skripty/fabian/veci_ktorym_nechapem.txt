@@ -1,0 +1,7 @@
+Ahoj,
+
+toto su veci, ktorým este úplne nerozumiem
+
+1. Úprimne celý syntax nechapem vsetky $($"...
+
+2. prosim uz podme na python ja toto nedavam
