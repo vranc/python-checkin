@@ -1,0 +1,77 @@
+#!/bin/env bash
+
+system_check() {
+    local timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
+    local report_file="reports/report-${timestamp}.log"
+    
+    echo "Začínam systémovú kontrolu..."
+    
+    # Vytvorenie dočasných súborov
+    local temp_files=(
+        "tmp/lshw.out"
+        "tmp/lscpu.out"
+        "tmp/dmidecode.out"
+        "tmp/netstat.out"
+    )
+    
+    # Zber základných systémových informácií
+    {
+        echo "=== SYSTEM REPORT ==="
+        echo "Dátum a čas: $(date)"
+        echo "Používateľ: $(whoami)"
+        echo "Hostname: $(hostname)"
+        echo "Kernel: $(uname -r)"
+        echo
+        echo "=== DISK USAGE ==="
+        df -h /
+        echo
+        echo "=== MEMORY ==="
+        free -h
+        echo
+    } > "$report_file"
+    
+    # Zber detailných informácií
+    echo "Zbieram hardvérové informácie..."
+    lshw > "${temp_files[0]}" 2>/dev/null || echo "lshw nie je k dispozícii" > "${temp_files[0]}"
+    
+    lscpu > "${temp_files[1]}" 2>/dev/null || echo "lscpu nie je k dispozícii" > "${temp_files[1]}"
+    
+    sudo dmidecode > "${temp_files[2]}" 2>/dev/null || echo "dmidecode nie je k dispozícii" > "${temp_files[2]}"
+    
+    netstat -naplut > "${temp_files[3]}" 2>/dev/null || echo "netstat nie je k dispozícii" > "${temp_files[3]}"
+    
+    # Spracovanie a parsovanie dát
+    echo "Spracúvam zozbierané údaje..."
+    
+    # CPU informácie
+    {
+        echo
+        echo "=== CPU INFORMATION ==="
+        grep "Model name" "${temp_files[1]}" || echo "CPU model: Nie je k dispozícii"
+        grep "CPU(s):" "${temp_files[1]}" | head -1 || echo "Počet jadier: Nie je k dispozícii"
+    } >> "$report_file"
+    
+    # RAM informácie
+    {
+        echo
+        echo "=== RAM INFORMATION ==="
+        grep -A5 "*-memory" "${temp_files[0]}" | grep "size" || echo "Veľkosť pamäte: Nie je k dispozícii"
+    } >> "$report_file"
+    
+    # Seriové číslo
+    {
+        echo
+        echo "=== SERIAL NUMBER ==="
+        grep "Serial Number" "${temp_files[2]}" | head -1 || echo "Seriové číslo: Nie je k dispozícii"
+    } >> "$report_file"
+    
+    # Otvorené porty
+    {
+        echo
+        echo "=== OPEN PORTS ==="
+        grep "LISTEN" "${temp_files[3]}" || echo "Otvorené porty: Nie sú k dispozícii"
+    } >> "$report_file"
+    
+    echo "Kontrola dokončená. Report uložený do: $report_file"
+}
+

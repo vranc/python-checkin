@@ -1,0 +1,26 @@
+#!/bin/env bash
+
+# Výpis názvu skriptu a dátumu
+echo "Spúšťam skript: $(basename "${BASH_SOURCE[0]}")"
+echo "Dátum: $(date)"
+
+# Nastavenie strict režimu
+set -e
+set -u
+
+# Funkcia na vyčistenie tmp adresára
+cleanup() {
+    echo "Vykonávam cleanup..."
+    rm -rf tmp/*
+}
+
+# Nastavenie trap na signály
+trap cleanup ERR EXIT TERM INT
+
+# Zistenie umiestnenia skriptu a presun do jeho priečinka
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR/.."
+
+# Kontrola a vytvorenie adresárovej štruktúry
+mkdir -p logs reports tmp lib
+echo "Adresárová štruktúra je pripravená"
